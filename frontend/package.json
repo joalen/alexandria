@@ -14,9 +14,12 @@
     "@iconify-json/lucide": "^1.2.104",
     "@iconify-json/simple-icons": "^1.2.80",
     "@nuxt/ui": "^4.7.0",
+    "@nuxtjs/color-mode": "^4.0.0",
+    "chart.js": "^4.5.1",
     "nuxt": "^4.4.2",
     "postgres": "^3.4.9",
-    "tailwindcss": "^4.2.4"
+    "tailwindcss": "^4.2.4",
+    "vue-chartjs": "^5.3.3"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
