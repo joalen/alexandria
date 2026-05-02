@@ -13,6 +13,8 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.104",
     "@iconify-json/simple-icons": "^1.2.80",
+    "@infisical/sdk": "^5.0.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@nuxt/ui": "^4.7.0",
     "@nuxtjs/color-mode": "^4.0.0",
     "chart.js": "^4.5.1",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
+    "@types/node": "^25.6.0",
     "eslint": "^10.2.1",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.2.7"
