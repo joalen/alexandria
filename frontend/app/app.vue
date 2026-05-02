@@ -1,9 +1,5 @@
 <template>
-  <div :class="`theme-${theme} term-root`">
+  <div class="theme-dark">
     <NuxtPage />
   </div>
 </template>
-
-<script setup lang="ts">
-const { theme } = useTheme()
-</script>
