@@ -309,3 +309,100 @@ table.term-table td {
 .tc-blue  { color: var(--term-blue);  }
 .tc-dim   { color: var(--term-dim);   }
 .tc-text  { color: var(--term-text);  }
+
+.term-editor {
+  width: 100%;
+  height: 100%;
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  border: none;
+  outline: none;
+  padding: 12px;
+  resize: none;
+  line-height: 1.6;
+  caret-color: var(--term-amber);
+}
+
+.term-login-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--term-panel);
+  border-bottom: 1px solid var(--term-border);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.term-input {
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  color: var(--term-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  outline: none;
+  width: 140px;
+}
+.term-input:focus { border-color: var(--term-amber); }
+
+.term-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--term-dim);
+}
+
+.term-error {
+  padding: 12px;
+  color: var(--term-red);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.term-builder {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.term-builder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.term-builder-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--term-dim);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.term-select {
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  color: var(--term-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  outline: none;
+  flex: 1;
+}
+.term-select:focus { border-color: var(--term-amber); }
+
+.term-builder-preview {
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--term-panel);
+  border: 1px solid var(--term-border);
+}
