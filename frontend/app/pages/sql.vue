@@ -5,8 +5,8 @@
     <div class="term-section-header" style="flex-shrink:0;">
       <span>SQL TERMINAL</span>
       <span class="tc-dim">—</span>
-      <span :class="isStaff ? 'tc-amber' : 'tc-dim'">ROLE: {{ isStaff ? 'STAFF' : 'READONLY' }}</span>
-      <button class="term-refresh-btn" @click="showLogin = !showLogin">
+      <span :class="isStaff ? 'tc-amber' : 'tc-dim'">ROLE: {{ currentUser }}</span>
+      <button class="term-refresh-btn" @click="isStaff ? logout() : showLogin = !showLogin">
         {{ isStaff ? 'LOGOUT' : 'LOGIN' }}
       </button>
       <button class="term-refresh-btn tc-amber" @click="runQuery" :disabled="running">
@@ -98,6 +98,7 @@ const isStaff    = ref(false)
 const loginUser  = ref('')
 const loginPass  = ref('')
 const loginError = ref('')
+const currentUser = ref('READONLY')
 
 const BLOCKED = ['drop ', 'truncate ', 'delete ', 'insert ', 'update ', 'alter ', 'create ']
 
@@ -127,17 +128,27 @@ const runQuery = async () => {
 const authenticate = async () => {
   loginError.value = ''
   try {
-    await $fetch('/api/auth', {
+    const res = await $fetch<{ user: string }>('/api/auth', {
       method: 'POST',
       body: { username: loginUser.value, password: loginPass.value }
     })
-    isStaff.value   = true
-    showLogin.value = false
-    loginUser.value = ''
-    loginPass.value = ''
+    isStaff.value    = true
+    currentUser.value = res.user.toUpperCase()
+    showLogin.value  = false
+    loginUser.value  = ''
+    loginPass.value  = ''
   }
   catch {
     loginError.value = 'INVALID CREDENTIALS'
   }
+}
+
+const logout = async () => {
+  await $fetch('/api/logout', { method: 'POST' })
+  isStaff.value    = false
+  currentUser.value = 'READONLY'
+  rows.value       = []
+  error.value      = ''
+  showLogin.value  = false
 }
 </script>
