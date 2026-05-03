@@ -74,9 +74,9 @@
     <div class="term-footer">
       <span>LIBRARYDB ANALYTICS — CS 4347.004 — TEAM 12</span>
       <div class="term-footer-right">
-        <span>POSTGRESQL 17</span>
-        <span class="term-conn-ok">CONN OK</span>
-        <span>LATENCY {{ latency }}ms</span>
+        <span>POSTGRESQL {{ pgVersion }}</span>
+        <span :class="connOk ? 'term-conn-ok' : 'tc-red'">{{ connOk ? 'CONN OK' : 'CONN ERR' }}</span>
+        <span>LATENCY {{ latency }} ms</span>
       </div>
     </div>
   </div>
@@ -103,14 +103,20 @@ const chartMin = computed(() => 0)
 const chartMax = computed(() => Math.ceil(Math.max(...chartData.value) / 5) * 5 + 5)
 
 const tiles = computed(() => [
-  { label: 'ACTIVE LOANS',   value: stats.activeLoans.toLocaleString(),        change: 'CURRENTLY OUT', changeDir: 'up',   valueColor: 'amber', changeColor: 'dim' },
-  { label: 'RESERVATIONS',   value: stats.reservations.toLocaleString(),        change: 'ON HOLD',       changeDir: 'flat', valueColor: 'blue',  changeColor: 'dim' },
-  { label: 'TOTAL RETURNED', value: stats.totalReturned.toLocaleString(),        change: 'ALL TIME',      changeDir: 'up',   valueColor: 'green', changeColor: 'dim' },
-  { label: 'TOTAL MEMBERS',  value: stats.totalMembers.toLocaleString(),         change: 'REGISTERED',    changeDir: 'flat', valueColor: 'text',  changeColor: 'dim' },
-  { label: 'LATE FEES',      value: `$${Number(stats.lateFees).toFixed(2)}`,    change: 'OUTSTANDING',   changeDir: 'up',   valueColor: 'red',   changeColor: 'red' },
+  { label: 'ACTIVE LOANS',   value: stats.activeLoans.toLocaleString(),     change: 'CURRENTLY OUT', changeDir: 'up' as const,   valueColor: 'amber', changeColor: 'dim' },
+  { label: 'RESERVATIONS',   value: stats.reservations.toLocaleString(),     change: 'ON HOLD',       changeDir: 'flat' as const, valueColor: 'blue',  changeColor: 'dim' },
+  { label: 'TOTAL RETURNED', value: stats.totalReturned.toLocaleString(),    change: 'ALL TIME',      changeDir: 'up' as const,   valueColor: 'green', changeColor: 'dim' },
+  { label: 'TOTAL MEMBERS',  value: stats.totalMembers.toLocaleString(),     change: 'REGISTERED',    changeDir: 'flat' as const, valueColor: 'text',  changeColor: 'dim' },
+  { label: 'LATE FEES',      value: `$${Number(stats.lateFees).toFixed(2)}`, change: 'OUTSTANDING',   changeDir: 'up' as const,   valueColor: 'red',   changeColor: 'red' },
+])
+
+const [versionRes, recRes] = await Promise.all([
+  q(`SELECT version()`),
+  q(`SELECT SUM(n_live_tup)::int AS total FROM pg_stat_user_tables`),
 ])
 
 const statusClass = (s: string) => ({ CRITICAL: 'tc-red', NOTIFY: 'tc-amber', PENDING: 'tc-dim' }[s] ?? '')
+const { recCount, pgVersion, connOk } = useSystemStats()
 
 const loadAll = async () => {
   loading.value = true
@@ -126,6 +132,11 @@ const loadAll = async () => {
     ])
 
     latency.value = Date.now() - t0
+    connOk.value  = true
+
+    const rawVersion = (versionRes as any[])[0]?.version ?? ''
+    pgVersion.value  = rawVersion.match(/PostgreSQL (\d+\.\d+)/)?.[1] ?? '??'
+    recCount.value   = Number((recRes as any[])[0]?.total ?? 0).toLocaleString()
 
     const dash = dashRes[0] ?? {}
     stats.activeLoans   = Number(dash.active_loans   ?? 0)
@@ -159,8 +170,11 @@ const loadAll = async () => {
       member: `M#${String(r.member).padStart(4, '0')}`,
     }))
   }
-  catch (e) { console.error('Dashboard load failed', e) }
-  finally   { loading.value = false }
+  catch (e) { 
+    console.error('Dashboard load failed', e) 
+    connOk.value = false
+    }
+  finally  { loading.value = false }
 }
 
 onMounted(loadAll)

@@ -29,7 +29,7 @@
     <div class="term-statusbar">
       <span class="term-live-dot" />
       <span class="term-status-live">LIVE</span>
-      <span class="term-status-rec">40,247 REC</span>
+      <span class="term-status-rec">{{ recCount }} REC</span>
       <span class="term-status-time">{{ clock }}</span>
     </div>
   </div>
@@ -38,7 +38,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const { theme, toggle } = useTheme()
-
+const { recCount } = useSystemStats()
 const clock = ref('')
 let interval: ReturnType<typeof setInterval>
 
