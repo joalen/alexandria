@@ -1,23 +1,18 @@
 import { neon } from '@neondatabase/serverless'
-
-const sessions = new Map<string, string>()
-
-export { sessions }
+import { sessions } from '../utils/sessions'
 
 export default defineEventHandler(async (event) => {
   const { username, password } = await readBody(event)
 
-  const base = new URL(process.env.NEON_CONNECTION_STRING!)
-  base.username = username
-  base.password = encodeURIComponent(password)
-
   try {
+    const base = new URL(process.env.NEON_CONNECTION_STRING!)
+    base.username = username
+    base.password = password
     const sql = neon(base.toString())
     await sql.query('SELECT 1')
 
     const token = crypto.randomUUID()
-    sessions.set(token, base.toString())
-
+    sessions.set(token, JSON.stringify({ username, password }))
     setCookie(event, 'session', token, { httpOnly: true, sameSite: 'strict' })
     return { ok: true, user: username }
   }

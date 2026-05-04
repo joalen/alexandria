@@ -15,6 +15,13 @@ export default defineNitroPlugin(async () => {
   })
 
   for (const secret of secrets) {
-    process.env[secret.secretKey] = secret.secretValue
+    if (secret.secretKey === 'NEON_CONNECTION_STRING') {
+      process.env[secret.secretKey] = secret.secretValue.replace(
+        /\/\/([^:]+):([^@]+)@/,
+        (_, user, pass) => `//${user}:${encodeURIComponent(pass)}@`
+      )
+    } else {
+      process.env[secret.secretKey] = secret.secretValue
+    }
   }
 })
