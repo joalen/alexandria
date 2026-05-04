@@ -31,9 +31,7 @@
       </div>
       <div class="term-tile" style="border-right:none;">
         <div class="term-tile-label">OVERDUE</div>
-        <div class="term-tile-value" :class="stats.overdue > 0 ? 'tc-red' : 'tc-text'">
-          {{ stats.overdue.toLocaleString() }}
-        </div>
+        <div class="term-tile-value" :class="stats.overdue > 0 ? 'tc-red' : 'tc-text'">{{ stats.overdue }}</div>
         <div class="term-tile-change" :class="stats.overdue > 0 ? 'tc-red' : 'tc-dim'">
           {{ stats.overdue > 0 ? '▲ ACTION REQUIRED' : '= NONE' }}
         </div>
@@ -69,8 +67,7 @@
             </div>
             <div class="books-filters">
               <button
-                v-for="s in statusFilters"
-                :key="s"
+                v-for="s in statusFilters" :key="s"
                 class="books-filter-btn"
                 :class="{ active: activeStatus === s }"
                 @click="activeStatus = s"
@@ -80,7 +77,7 @@
 
           <!-- Table -->
           <div class="term-table-wrap">
-            <div v-if="loading"   class="term-empty tc-amber">FETCHING CATALOG...</div>
+            <div v-if="loading" class="term-empty tc-amber">FETCHING CATALOG...</div>
             <div v-else-if="loadError" class="term-error">{{ loadError }}</div>
             <table v-else class="term-table books-table">
               <thead>
@@ -88,7 +85,6 @@
                   <th class="col-serial" @click="setSort('serial_number')">SERIAL <span class="sort-arrow">{{ sortArrow('serial_number') }}</span></th>
                   <th class="col-title"  @click="setSort('name')">TITLE <span class="sort-arrow">{{ sortArrow('name') }}</span></th>
                   <th class="col-author" @click="setSort('author')">AUTHOR <span class="sort-arrow">{{ sortArrow('author') }}</span></th>
-                  <th class="col-pub"    @click="setSort('publisher')">PUBLISHER <span class="sort-arrow">{{ sortArrow('publisher') }}</span></th>
                   <th class="col-num"    @click="setSort('total_copies')">COPIES <span class="sort-arrow">{{ sortArrow('total_copies') }}</span></th>
                   <th class="col-num"    @click="setSort('available')">AVAIL <span class="sort-arrow">{{ sortArrow('available') }}</span></th>
                   <th class="col-num"    @click="setSort('on_loan')">LOAN <span class="sort-arrow">{{ sortArrow('on_loan') }}</span></th>
@@ -99,8 +95,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="book in sortedBooks"
-                  :key="book.serial_number"
+                  v-for="book in sortedBooks" :key="book.serial_number"
                   class="books-row"
                   :class="{ selected: selectedBook?.serial_number === book.serial_number }"
                   @click="selectedBook = selectedBook?.serial_number === book.serial_number ? null : book"
@@ -108,7 +103,6 @@
                   <td class="tc-dim">{{ book.serial_number }}</td>
                   <td class="tc-text books-title-cell">{{ book.name }}</td>
                   <td class="tc-dim  books-trunc-cell">{{ book.author }}</td>
-                  <td class="tc-dim  books-trunc-cell">{{ book.publisher }}</td>
                   <td style="text-align:right;" class="tc-text">{{ book.total_copies }}</td>
                   <td style="text-align:right;" class="tc-green">{{ book.available }}</td>
                   <td style="text-align:right;" class="tc-amber">{{ book.on_loan }}</td>
@@ -117,7 +111,7 @@
                   <td><span class="books-status" :class="statusClass(book)">{{ statusLabel(book) }}</span></td>
                 </tr>
                 <tr v-if="!loading && sortedBooks.length === 0 && !loadError">
-                  <td colspan="10"><div class="term-empty">NO RECORDS MATCH FILTER</div></td>
+                  <td colspan="9"><div class="term-empty">NO RECORDS MATCH FILTER</div></td>
                 </tr>
               </tbody>
             </table>
@@ -151,8 +145,8 @@
               <span class="tc-amber">{{ selectedBook.serial_number }}</span>
             </div>
             <div class="books-detail-row">
-              <span class="books-detail-label tc-dim">PUBLISHER</span>
-              <span class="tc-text">{{ selectedBook.publisher || '—' }}</span>
+              <span class="books-detail-label tc-dim">PUBLISHER ID</span>
+              <span class="tc-text">{{ selectedBook.publisher_id ?? '—' }}</span>
             </div>
             <div class="books-detail-row">
               <span class="books-detail-label tc-dim">PUBLISHED</span>
@@ -243,27 +237,27 @@
           </div>
         </div>
 
-        <!-- Publisher Breakdown -->
+        <!-- Copy Condition Breakdown -->
         <div class="term-section" style="flex-shrink:0;">
           <div class="term-section-header">
-            <span class="tc-amber" style="font-weight:600;letter-spacing:.12em;">BY PUBLISHER</span>
-            <span class="tc-dim">— TITLE COUNT</span>
+            <span class="tc-amber" style="font-weight:600;letter-spacing:.12em;">COPY CONDITIONS</span>
+            <span class="tc-dim">— FROM book_copy</span>
           </div>
           <div style="padding:6px 0;">
             <div v-if="loading" class="term-empty tc-amber" style="height:60px;">LOADING...</div>
             <template v-else>
-              <div v-for="item in publisherStats" :key="item.publisher" class="term-bar-row">
-                <div class="term-bar-label">{{ (item.publisher ?? 'UNKNOWN').slice(0, 10) }}</div>
+              <div v-for="item in conditionStats" :key="item.condition" class="term-bar-row">
+                <div class="term-bar-label">{{ (item.condition ?? 'UNKNOWN').slice(0, 10).toUpperCase() }}</div>
                 <div class="term-bar-track">
-                  <div class="term-bar-fill" :style="{ width: item.pct + '%', background: 'var(--term-amber)' }" />
+                  <div class="term-bar-fill" :style="{ width: item.pct + '%', background: conditionColor(item.condition) }" />
                 </div>
-                <div class="term-bar-pct tc-amber">{{ item.count }}</div>
+                <div class="term-bar-pct" :style="{ color: conditionColor(item.condition) }">{{ item.count }}</div>
               </div>
             </template>
           </div>
           <div class="term-bar-totals">
-            <span>{{ publisherStats.length }} PUBLISHERS</span>
-            <span>TOTAL TITLES: <span class="tc-amber">{{ stats.totalTitles }}</span></span>
+            <span>{{ conditionStats.length }} CONDITIONS</span>
+            <span>TOTAL COPIES: <span class="tc-amber">{{ stats.totalCopies }}</span></span>
           </div>
         </div>
 
@@ -285,7 +279,7 @@ interface BookRow {
   serial_number:   string
   name:            string
   author:          string
-  publisher:       string
+  publisher_id:    number | null
   date_published:  string | null
   date_added:      string | null
   number_of_pages: number | null
@@ -302,8 +296,8 @@ interface TopBook {
   borrow_count:  number
 }
 
-interface PubStat {
-  publisher: string
+interface ConditionStat {
+  condition: string
   count:     number
   pct:       number
 }
@@ -317,7 +311,7 @@ const lastUpdated  = ref('—')
 
 const books          = ref<BookRow[]>([])
 const topBorrowed    = ref<TopBook[]>([])
-const publisherStats = ref<PubStat[]>([])
+const conditionStats = ref<ConditionStat[]>([])
 
 const searchQuery  = ref('')
 const activeStatus = ref('ALL')
@@ -329,10 +323,10 @@ const statusFilters = ['ALL', 'IN STOCK', 'PARTIAL', 'ALL OUT', 'RESERVED']
 
 const stats = computed(() => ({
   totalTitles: books.value.length,
-  totalCopies: books.value.reduce((s, b) => s + Number(b.total_copies), 0),
-  available:   books.value.reduce((s, b) => s + Number(b.available),    0),
-  onLoan:      books.value.reduce((s, b) => s + Number(b.on_loan),      0),
-  reserved:    books.value.reduce((s, b) => s + Number(b.reserved),     0),
+  totalCopies: books.value.reduce((s, b) => s + b.total_copies, 0),
+  available:   books.value.reduce((s, b) => s + b.available,    0),
+  onLoan:      books.value.reduce((s, b) => s + b.on_loan,      0),
+  reserved:    books.value.reduce((s, b) => s + b.reserved,     0),
   overdue:     0,
 }))
 
@@ -341,9 +335,8 @@ const filteredBooks = computed(() => {
   if (searchQuery.value.trim()) {
     const needle = searchQuery.value.toLowerCase()
     list = list.filter(b =>
-      b.name?.toLowerCase().includes(needle)      ||
-      b.author?.toLowerCase().includes(needle)    ||
-      b.publisher?.toLowerCase().includes(needle) ||
+      b.name?.toLowerCase().includes(needle)   ||
+      b.author?.toLowerCase().includes(needle) ||
       b.serial_number?.toLowerCase().includes(needle)
     )
   }
@@ -363,23 +356,20 @@ const sortedBooks = computed(() => {
   })
 })
 
+
 function statusLabel(book: BookRow) {
-  const avail = Number(book.available)
-  const total = Number(book.total_copies)
-  const resv  = Number(book.reserved)
-  if (avail === 0 && resv > 0) return 'RESERVED'
-  if (avail === 0)             return 'ALL OUT'
-  if (avail === total)         return 'IN STOCK'
+  if (book.available === 0 && book.reserved > 0) return 'RESERVED'
+  if (book.available === 0)                      return 'ALL OUT'
+  if (book.available === book.total_copies)      return 'IN STOCK'
   return 'PARTIAL'
 }
 
 function statusClass(book: BookRow) {
-  const label = statusLabel(book)
-  return { 'RESERVED': 'status-blue', 'ALL OUT': 'status-red', 'IN STOCK': 'status-green', 'PARTIAL': 'status-amber' }[label] ?? ''
+  return { 'RESERVED': 'status-blue', 'ALL OUT': 'status-red', 'IN STOCK': 'status-green', 'PARTIAL': 'status-amber' }[statusLabel(book)] ?? ''
 }
 
 function pct(val: number, total: number) {
-  return total ? Math.round((Number(val) / Number(total)) * 100) : 0
+  return total ? Math.round((val / total) * 100) : 0
 }
 
 function setSort(key: string) {
@@ -392,62 +382,82 @@ function sortArrow(key: string) {
   return sortDir.value === 'asc' ? '↑' : '↓'
 }
 
+function conditionColor(condition: string) {
+  const c = (condition ?? '').toLowerCase()
+  if (c.includes('new') || c.includes('excellent')) return 'var(--term-green)'
+  if (c.includes('good'))                           return 'var(--term-amber)'
+  if (c.includes('fair') || c.includes('worn'))     return 'var(--term-blue)'
+  if (c.includes('poor') || c.includes('damage'))   return 'var(--term-red)'
+  return 'var(--term-dim)'
+}
+
 const loadAll = async () => {
   loading.value   = true
   loadError.value = ''
   try {
-    const [catalogRes, topRes] = await Promise.all([
+    const [catalogRes, topRes, conditionRes] = await Promise.all([
+
+      // view for book catalog
       q(`
         SELECT
           b.serial_number,
           b.name,
-          a.name                                                                AS author,
-          p.name                                                                AS publisher,
+          b.author,
+          b.publisher_id,
           b.date_published,
           b.date_added,
           b.number_of_pages,
-          COUNT(DISTINCT bc.book_id)                                            AS total_copies,
+          COUNT(DISTINCT bc.book_id)                                       AS total_copies,
           COUNT(DISTINCT CASE WHEN l.date_returned IS NULL
-                              THEN l.loan_number END)                           AS on_loan,
-          COUNT(DISTINCT r.reservation_id)                                      AS reserved,
+                              THEN l.loan_number END)                      AS on_loan,
+          COUNT(DISTINCT r.reservation_id)                                 AS reserved,
           GREATEST(
             COUNT(DISTINCT bc.book_id)
               - COUNT(DISTINCT CASE WHEN l.date_returned IS NULL
                                     THEN l.loan_number END),
             0
-          )                                                                     AS available
+          )                                                                AS available
         FROM book b
-        LEFT JOIN author      a  ON a.author_id    = b.author_id
-        LEFT JOIN publisher   p  ON p.publisher_id = b.publisher_id
-        LEFT JOIN book_copy   bc ON bc.book_id     = b.serial_number
-        LEFT JOIN loan        l  ON l.book_serial_number = b.serial_number
+        LEFT JOIN book_copy   bc ON bc.book_id           = b.serial_number
+        LEFT JOIN loan        l  ON l.book_serial_number  = b.serial_number
                                  AND l.date_returned IS NULL
-        LEFT JOIN reservation r  ON r.book_serial  = b.serial_number
-        GROUP BY b.serial_number, b.name, a.name, p.name,
+        LEFT JOIN reservation r  ON r.book_serial         = b.serial_number
+        GROUP BY b.serial_number, b.name, b.author, b.publisher_id,
                  b.date_published, b.date_added, b.number_of_pages
         ORDER BY b.name
         LIMIT 500;
       `),
+
+      // Top borrowed
       q(`
         SELECT
           b.serial_number,
           b.name,
-          a.name               AS author,
+          b.author,
           COUNT(l.loan_number) AS borrow_count
         FROM loan l
-        JOIN book   b ON l.book_serial_number = b.serial_number
-        LEFT JOIN author a ON a.author_id = b.author_id
-        GROUP BY b.serial_number, b.name, a.name
+        JOIN book b ON l.book_serial_number = b.serial_number
+        GROUP BY b.serial_number, b.name, b.author
         ORDER BY borrow_count DESC
         LIMIT 10;
+      `),
+
+      // Copy condition breakdown from book_copy
+      q(`
+        SELECT
+          COALESCE(condition, 'UNKNOWN') AS condition,
+          COUNT(*)                        AS count
+        FROM book_copy
+        GROUP BY condition
+        ORDER BY count DESC;
       `),
     ])
 
     books.value = (catalogRes as any[]).map(r => ({
       serial_number:   r.serial_number,
       name:            r.name,
-      author:          r.author    ?? '—',
-      publisher:       r.publisher ?? '—',
+      author:          r.author ?? '—',
+      publisher_id:    r.publisher_id != null ? Number(r.publisher_id) : null,
       date_published:  r.date_published,
       date_added:      r.date_added,
       number_of_pages: r.number_of_pages != null ? Number(r.number_of_pages) : null,
@@ -464,17 +474,12 @@ const loadAll = async () => {
       borrow_count:  Number(r.borrow_count),
     }))
 
-    // Build publisher breakdown from catalog already in memory (no need to over-fetch)
-    const pubMap = new Map<string, number>()
-    for (const b of books.value) {
-      const key = b.publisher || 'UNKNOWN'
-      pubMap.set(key, (pubMap.get(key) ?? 0) + 1)
-    }
-    const maxCount = Math.max(...pubMap.values(), 1)
-    publisherStats.value = [...pubMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([publisher, count]) => ({ publisher, count, pct: Math.round((count / maxCount) * 100) }))
+    const maxCond = Math.max(...(conditionRes as any[]).map(r => Number(r.count)), 1)
+    conditionStats.value = (conditionRes as any[]).map(r => ({
+      condition: r.condition,
+      count:     Number(r.count),
+      pct:       Math.round((Number(r.count) / maxCond) * 100),
+    }))
 
     lastUpdated.value = new Date().toLocaleTimeString('en-GB', { hour12: false })
   }
@@ -499,7 +504,6 @@ onMounted(loadAll)
 }
 .books-body .term-col:first-child { border-right: 2px solid var(--term-border); }
 
-/* Toolbar */
 .books-toolbar {
   display: flex;
   align-items: center;
@@ -553,27 +557,25 @@ onMounted(loadAll)
 .books-filter-btn:hover  { border-color: var(--term-amber); color: var(--term-amber); }
 .books-filter-btn.active { border-color: var(--term-amber); color: var(--term-amber); background: rgba(255,179,0,0.08); }
 
-/* Table columns */
 .books-table .col-serial { width: 90px; }
-.books-table .col-title  { min-width: 130px; }
-.books-table .col-author { width: 120px; }
-.books-table .col-pub    { width: 100px; }
-.books-table .col-num    { width: 48px; text-align: right; }
+.books-table .col-title  { min-width: 140px; }
+.books-table .col-author { width: 140px; }
+.books-table .col-num    { width: 50px; text-align: right; }
 .books-table .col-year   { width: 46px; }
 .books-table .col-status { width: 76px; }
 
 .books-title-cell,
 .books-trunc-cell {
-  max-width: 160px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.books-row            { cursor: pointer; transition: background 0.08s; }
-.books-row:hover      { background: rgba(255,179,0,0.04); }
-.books-row.selected   { background: rgba(255,179,0,0.09); }
-.sort-arrow           { color: var(--term-dim); font-size: 9px; margin-left: 2px; }
+.books-row          { cursor: pointer; transition: background 0.08s; }
+.books-row:hover    { background: rgba(255,179,0,0.04); }
+.books-row.selected { background: rgba(255,179,0,0.09); }
+.sort-arrow         { color: var(--term-dim); font-size: 9px; margin-left: 2px; }
 
 .books-status  { font-size: 9px; letter-spacing: 0.08em; font-weight: 600; }
 .status-green  { color: var(--term-green); }
@@ -581,7 +583,6 @@ onMounted(loadAll)
 .status-red    { color: var(--term-red);   }
 .status-blue   { color: var(--term-blue);  }
 
-/* Detail panel */
 .books-detail-section  { flex-shrink: 0; }
 .books-detail-body     { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 5px; }
 .books-detail-title    { font-size: 13px; font-weight: 600; line-height: 1.4; }
