@@ -396,61 +396,9 @@ const loadAll = async () => {
   loadError.value = ''
   try {
     const [catalogRes, topRes, conditionRes] = await Promise.all([
-
-      // view for book catalog
-      q(`
-        SELECT
-          b.serial_number,
-          b.name,
-          b.author,
-          b.publisher_id,
-          b.date_published,
-          b.date_added,
-          b.number_of_pages,
-          COUNT(DISTINCT bc.book_id)                                       AS total_copies,
-          COUNT(DISTINCT CASE WHEN l.date_returned IS NULL
-                              THEN l.loan_number END)                      AS on_loan,
-          COUNT(DISTINCT r.reservation_id)                                 AS reserved,
-          GREATEST(
-            COUNT(DISTINCT bc.book_id)
-              - COUNT(DISTINCT CASE WHEN l.date_returned IS NULL
-                                    THEN l.loan_number END),
-            0
-          )                                                                AS available
-        FROM book b
-        LEFT JOIN book_copy   bc ON bc.book_id           = b.serial_number
-        LEFT JOIN loan        l  ON l.book_serial_number  = b.serial_number
-                                 AND l.date_returned IS NULL
-        LEFT JOIN reservation r  ON r.book_serial         = b.serial_number
-        GROUP BY b.serial_number, b.name, b.author, b.publisher_id,
-                 b.date_published, b.date_added, b.number_of_pages
-        ORDER BY b.name
-        LIMIT 500;
-      `),
-
-      // Top borrowed
-      q(`
-        SELECT
-          b.serial_number,
-          b.name,
-          b.author,
-          COUNT(l.loan_number) AS borrow_count
-        FROM loan l
-        JOIN book b ON l.book_serial_number = b.serial_number
-        GROUP BY b.serial_number, b.name, b.author
-        ORDER BY borrow_count DESC
-        LIMIT 10;
-      `),
-
-      // Copy condition breakdown from book_copy
-      q(`
-        SELECT
-          COALESCE(condition, 'UNKNOWN') AS condition,
-          COUNT(*)                        AS count
-        FROM book_copy
-        GROUP BY condition
-        ORDER BY count DESC;
-      `),
+      q(`SELECT * FROM v_book_catalog ORDER BY name LIMIT 500;`),
+      q(`SELECT * FROM v_top_borrowed LIMIT 10;`),
+      q(`SELECT condition, COUNT(*) AS count FROM book_copy GROUP BY condition ORDER BY count DESC;`),
     ])
 
     books.value = (catalogRes as any[]).map(r => ({
