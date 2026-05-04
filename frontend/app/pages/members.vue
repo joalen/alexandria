@@ -191,6 +191,7 @@
 
             <!-- Staff Actions -->
             <template v-if="isStaff">
+              <div style="font-size:9px;" class="tc-dim">STAFF: {{ isStaff }}</div>
               <div class="members-detail-divider" />
               <div class="members-staff-label tc-dim">STAFF ACTIONS</div>
               <div class="members-actions">
@@ -309,130 +310,128 @@
       </div>
     </div>
 
-    <!-- Staff Action Modals -->
-    <Teleport to="body">
-      <div v-if="activeModal" class="members-modal-overlay" @click.self="closeModal">
-        <div class="members-modal">
+    <!-- Staff Action -->
+    <div v-if="activeModal" class="members-modal-overlay" @click.self="closeModal">
+      <div class="members-modal">
 
-          <!-- ISSUE LOAN -->
-          <template v-if="activeModal === 'loan'">
-            <div class="members-modal-header">
-              <span class="tc-green" style="font-weight:700;letter-spacing:.1em;">+ ISSUE LOAN</span>
-              <span class="tc-dim" style="font-size:10px;">
-                MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
+        <!-- Loan Issue template -->
+        <template v-if="activeModal === 'loan'">
+          <div class="members-modal-header">
+            <span class="tc-green" style="font-weight:700;letter-spacing:.1em;">+ ISSUE LOAN</span>
+            <span class="tc-dim" style="font-size:10px;">
+              MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
+            </span>
+            <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
+          </div>
+          <div class="members-modal-body">
+            <div class="members-form-row">
+              <label class="members-form-label tc-dim">BOOK SERIAL</label>
+              <input v-model="actionForm.bookSerial" class="term-input members-form-input" placeholder="e.g. SN20006" />
+            </div>
+            <div class="members-form-row">
+              <label class="members-form-label tc-dim">STAFF ID</label>
+              <input v-model="actionForm.staffId" class="term-input members-form-input" type="number" placeholder="your staff ID" />
+            </div>
+            <div v-if="actionError" class="tc-red" style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
+            <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
+          </div>
+          <div class="members-modal-footer">
+            <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
+            <button class="members-action-btn tc-green" style="border-color:var(--term-green);"
+              @click="issueLoan" :disabled="actionLoading">
+              {{ actionLoading ? 'PROCESSING...' : 'CONFIRM LOAN' }}
+            </button>
+          </div>
+        </template>
+
+        <!-- PROCESS RETURN -->
+        <template v-else-if="activeModal === 'return'">
+          <div class="members-modal-header">
+            <span class="tc-amber" style="font-weight:700;letter-spacing:.1em;">↩ PROCESS RETURN</span>
+            <span class="tc-dim" style="font-size:10px;">
+              MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
+            </span>
+            <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
+          </div>
+          <div class="members-modal-body">
+            <div class="members-form-row">
+              <label class="members-form-label tc-dim">LOAN #</label>
+              <select v-model="actionForm.loanNumber" class="term-select members-form-input">
+                <option value="">— select loan —</option>
+                <option v-for="l in activeLoans" :key="l.loan_number" :value="l.loan_number">
+                  #{{ l.loan_number }} — {{ l.book_name }}
+                </option>
+              </select>
+            </div>
+            <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
+            <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
+          </div>
+          <div class="members-modal-footer">
+            <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
+            <button class="members-action-btn tc-amber" style="border-color:var(--term-amber);"
+              @click="processReturn" :disabled="actionLoading || !actionForm.loanNumber">
+              {{ actionLoading ? 'PROCESSING...' : 'CONFIRM RETURN' }}
+            </button>
+          </div>
+        </template>
+
+        <!-- PLACE RESERVATION -->
+        <template v-else-if="activeModal === 'reservation'">
+          <div class="members-modal-header">
+            <span class="tc-blue" style="font-weight:700;letter-spacing:.1em;">⊕ PLACE RESERVATION</span>
+            <span class="tc-dim" style="font-size:10px;">
+              MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
+            </span>
+            <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
+          </div>
+          <div class="members-modal-body">
+            <div class="members-form-row">
+              <label class="members-form-label tc-dim">BOOK SERIAL</label>
+              <input v-model="actionForm.bookSerial" class="term-input members-form-input" placeholder="e.g. SN20006" />
+            </div>
+            <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
+            <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
+          </div>
+          <div class="members-modal-footer">
+            <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
+            <button class="members-action-btn tc-blue" style="border-color:var(--term-blue);"
+              @click="placeReservation" :disabled="actionLoading">
+              {{ actionLoading ? 'PROCESSING...' : 'CONFIRM RESERVATION' }}
+            </button>
+          </div>
+        </template>
+
+        <!-- CLEAR FEES -->
+        <template v-else-if="activeModal === 'fee'">
+          <div class="members-modal-header">
+            <span class="tc-red" style="font-weight:700;letter-spacing:.1em;">$ CLEAR LATE FEES</span>
+            <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
+          </div>
+          <div class="members-modal-body">
+            <div class="members-form-row">
+              <span class="tc-dim members-form-label">MEMBER</span>
+              <span class="tc-amber">M#{{ String(selectedMember!.member_id).padStart(4,'0') }}</span>
+            </div>
+            <div class="members-form-row">
+              <span class="tc-dim members-form-label">AMOUNT</span>
+              <span class="tc-red" style="font-size:16px;font-weight:700;">
+                ${{ Number(selectedMember!.late_fees).toFixed(2) }}
               </span>
-              <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
             </div>
-            <div class="members-modal-body">
-              <div class="members-form-row">
-                <label class="members-form-label tc-dim">BOOK SERIAL</label>
-                <input v-model="actionForm.bookSerial" class="term-input members-form-input" placeholder="e.g. SN20006" />
-              </div>
-              <div class="members-form-row">
-                <label class="members-form-label tc-dim">STAFF ID</label>
-                <input v-model="actionForm.staffId" class="term-input members-form-input" type="number" placeholder="your staff ID" />
-              </div>
-              <div v-if="actionError" class="tc-red" style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
-              <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
-            </div>
-            <div class="members-modal-footer">
-              <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
-              <button class="members-action-btn tc-green" style="border-color:var(--term-green);"
-                @click="issueLoan" :disabled="actionLoading">
-                {{ actionLoading ? 'PROCESSING...' : 'CONFIRM LOAN' }}
-              </button>
-            </div>
-          </template>
+            <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
+            <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
+          </div>
+          <div class="members-modal-footer">
+            <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
+            <button class="members-action-btn tc-red" style="border-color:var(--term-red);"
+              @click="clearFees" :disabled="actionLoading">
+              {{ actionLoading ? 'PROCESSING...' : 'CLEAR FEES' }}
+            </button>
+          </div>
+        </template>
 
-          <!-- PROCESS RETURN -->
-          <template v-else-if="activeModal === 'return'">
-            <div class="members-modal-header">
-              <span class="tc-amber" style="font-weight:700;letter-spacing:.1em;">↩ PROCESS RETURN</span>
-              <span class="tc-dim" style="font-size:10px;">
-                MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
-              </span>
-              <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
-            </div>
-            <div class="members-modal-body">
-              <div class="members-form-row">
-                <label class="members-form-label tc-dim">LOAN #</label>
-                <select v-model="actionForm.loanNumber" class="term-select members-form-input">
-                  <option value="">— select loan —</option>
-                  <option v-for="l in activeLoans" :key="l.loan_number" :value="l.loan_number">
-                    #{{ l.loan_number }} — {{ l.book_name }}
-                  </option>
-                </select>
-              </div>
-              <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
-              <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
-            </div>
-            <div class="members-modal-footer">
-              <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
-              <button class="members-action-btn tc-amber" style="border-color:var(--term-amber);"
-                @click="processReturn" :disabled="actionLoading || !actionForm.loanNumber">
-                {{ actionLoading ? 'PROCESSING...' : 'CONFIRM RETURN' }}
-              </button>
-            </div>
-          </template>
-
-          <!-- PLACE RESERVATION -->
-          <template v-else-if="activeModal === 'reservation'">
-            <div class="members-modal-header">
-              <span class="tc-blue" style="font-weight:700;letter-spacing:.1em;">⊕ PLACE RESERVATION</span>
-              <span class="tc-dim" style="font-size:10px;">
-                MEMBER M#{{ String(selectedMember!.member_id).padStart(4,'0') }}
-              </span>
-              <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
-            </div>
-            <div class="members-modal-body">
-              <div class="members-form-row">
-                <label class="members-form-label tc-dim">BOOK SERIAL</label>
-                <input v-model="actionForm.bookSerial" class="term-input members-form-input" placeholder="e.g. SN20006" />
-              </div>
-              <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
-              <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
-            </div>
-            <div class="members-modal-footer">
-              <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
-              <button class="members-action-btn tc-blue" style="border-color:var(--term-blue);"
-                @click="placeReservation" :disabled="actionLoading">
-                {{ actionLoading ? 'PROCESSING...' : 'CONFIRM RESERVATION' }}
-              </button>
-            </div>
-          </template>
-
-          <!-- CLEAR FEES -->
-          <template v-else-if="activeModal === 'fee'">
-            <div class="members-modal-header">
-              <span class="tc-red" style="font-weight:700;letter-spacing:.1em;">$ CLEAR LATE FEES</span>
-              <button class="members-modal-close tc-dim" @click="closeModal">✕</button>
-            </div>
-            <div class="members-modal-body">
-              <div class="members-form-row">
-                <span class="tc-dim members-form-label">MEMBER</span>
-                <span class="tc-amber">M#{{ String(selectedMember!.member_id).padStart(4,'0') }}</span>
-              </div>
-              <div class="members-form-row">
-                <span class="tc-dim members-form-label">AMOUNT</span>
-                <span class="tc-red" style="font-size:16px;font-weight:700;">
-                  ${{ Number(selectedMember!.late_fees).toFixed(2) }}
-                </span>
-              </div>
-              <div v-if="actionError"   class="tc-red"   style="font-size:10px;padding:4px 0;">{{ actionError }}</div>
-              <div v-if="actionSuccess" class="tc-green" style="font-size:10px;padding:4px 0;">{{ actionSuccess }}</div>
-            </div>
-            <div class="members-modal-footer">
-              <button class="members-action-btn tc-dim" @click="closeModal">CANCEL</button>
-              <button class="members-action-btn tc-red" style="border-color:var(--term-red);"
-                @click="clearFees" :disabled="actionLoading">
-                {{ actionLoading ? 'PROCESSING...' : 'CLEAR FEES' }}
-              </button>
-            </div>
-          </template>
-
-        </div>
       </div>
-    </Teleport>
+    </div>
 
     <div class="term-footer">
       <span>Alexandria Console — CS 4347.004 — TEAM 12</span>
@@ -478,35 +477,7 @@ const { pgVersion } = useSystemStats()
 const q  = (sql: string) => $fetch('/api/query', { method: 'POST', body: { sql } }) as Promise<any[]>
 const qw = (sql: string) => $fetch('/api/query', { method: 'POST', body: { sql } }) as Promise<any[]>
 
-const isStaff    = ref(false)
-const showLogin  = ref(false)
-const loginUser  = ref('')
-const loginPass  = ref('')
-const loginError = ref('')
-const currentStaffId = ref<number | null>(null)
-
-const authenticate = async () => {
-  loginError.value = ''
-  try {
-    const res = await $fetch<{ user: string; staff_id?: number }>('/api/auth', {
-      method: 'POST',
-      body: { username: loginUser.value, password: loginPass.value },
-    })
-    isStaff.value       = true
-    currentStaffId.value = res.staff_id ?? null
-    showLogin.value     = false
-    loginUser.value     = ''
-    loginPass.value     = ''
-  }
-  catch { loginError.value = 'INVALID CREDENTIALS' }
-}
-
-const logout = async () => {
-  await $fetch('/api/logout', { method: 'POST' })
-  isStaff.value        = false
-  currentStaffId.value = null
-  showLogin.value      = false
-}
+const { isStaff, showLogin, loginUser, loginPass, loginError, authenticate, logout } = useAuth()
 
 const loading      = ref(false)
 const loadError    = ref('')
@@ -614,7 +585,7 @@ function openModal(type: typeof activeModal.value) {
   actionSuccess.value = ''
   actionForm.bookSerial  = ''
   actionForm.loanNumber  = ''
-  actionForm.staffId     = currentStaffId.value ?? ''
+  actionForm.staffId = ''
 }
 function closeModal() {
   if (actionSuccess.value) loadAll()
@@ -643,7 +614,7 @@ const issueLoan = async () => {
       VALUES (${selectedMember.value!.member_id}, ${actionForm.staffId}, '${actionForm.bookSerial}', CURRENT_DATE);
     `)
     actionSuccess.value = `LOAN ISSUED — ${actionForm.bookSerial} → M#${String(selectedMember.value!.member_id).padStart(4,'0')}`
-    await selectMember(selectedMember.value!)
+    await refreshMember()
   }
   catch (e: any) { actionError.value = e?.data?.message ?? e?.message ?? 'LOAN FAILED' }
   finally { actionLoading.value = false }
@@ -658,10 +629,27 @@ const processReturn = async () => {
       UPDATE loan SET date_returned = CURRENT_DATE WHERE loan_number = ${actionForm.loanNumber};
     `)
     actionSuccess.value = `LOAN #${actionForm.loanNumber} RETURNED`
-    await selectMember(selectedMember.value!)
+    await refreshMember()
   }
   catch (e: any) { actionError.value = e?.data?.message ?? e?.message ?? 'RETURN FAILED' }
   finally { actionLoading.value = false }
+}
+
+const refreshMember = async () => {
+  if (!selectedMember.value) return
+  const m = selectedMember.value
+  detailLoading.value = true
+  try {
+    const [loansRes, resvRes, histRes] = await Promise.all([
+      q(`SELECT * FROM v_member_loans WHERE member_id = ${m.member_id} AND date_returned IS NULL ORDER BY date_issued DESC;`),
+      q(`SELECT * FROM v_member_reservations WHERE member_id = ${m.member_id} ORDER BY date_reserved DESC;`),
+      q(`SELECT * FROM v_member_loans WHERE member_id = ${m.member_id} ORDER BY date_issued DESC LIMIT 50;`),
+    ])
+    activeLoans.value        = loansRes as LoanRow[]
+    memberReservations.value = resvRes  as ReservationRow[]
+    loanHistory.value        = histRes  as LoanRow[]
+  }
+  finally { detailLoading.value = false }
 }
 
 const placeReservation = async () => {
@@ -669,7 +657,7 @@ const placeReservation = async () => {
   actionLoading.value = true
   actionError.value   = ''
   try {
-    // Guard: check book exists
+    // Guard for checking book existence
     const exists = await q(`SELECT serial_number FROM book WHERE serial_number = '${actionForm.bookSerial}';`)
     if (!exists.length) throw new Error('BOOK SERIAL NOT FOUND')
 
@@ -678,7 +666,7 @@ const placeReservation = async () => {
       VALUES (${selectedMember.value!.member_id}, '${actionForm.bookSerial}', CURRENT_DATE);
     `)
     actionSuccess.value = `RESERVATION PLACED — ${actionForm.bookSerial}`
-    await selectMember(selectedMember.value!)
+    await refreshMember()
   }
   catch (e: any) { actionError.value = e?.data?.message ?? e?.message ?? 'RESERVATION FAILED' }
   finally { actionLoading.value = false }

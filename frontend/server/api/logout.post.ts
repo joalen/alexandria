@@ -1,4 +1,4 @@
-import { sessions } from './auth.post'
+import { sessions } from '../utils/sessions'
 
 export default defineEventHandler((event) => {
   const token = getCookie(event, 'session')

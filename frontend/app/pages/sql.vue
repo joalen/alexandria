@@ -6,7 +6,7 @@
       <span>SQL TERMINAL</span>
       <span class="tc-dim">—</span>
       <span :class="isStaff ? 'tc-amber' : 'tc-dim'">ROLE: {{ currentUser }}</span>
-      <button class="term-refresh-btn" @click="isStaff ? logout() : showLogin = !showLogin">
+      <button class="term-refresh-btn" @click="isStaff ? handleLogout() : showLogin = !showLogin">
         {{ isStaff ? 'LOGOUT' : 'LOGIN' }}
       </button>
     </div>
@@ -174,12 +174,7 @@ const columns    = ref<string[]>([])
 const running    = ref(false)
 const error      = ref('')
 const execTime   = ref<number | null>(null)
-const showLogin  = ref(false)
-const isStaff    = ref(false)
-const loginUser  = ref('')
-const loginPass  = ref('')
-const loginError = ref('')
-const currentUser = ref('READONLY')
+const { isStaff, showLogin, loginUser, loginPass, loginError, currentUser, authenticate, logout } = useAuth()
 
 const builder = reactive({
   operation: 'find_books',
@@ -250,7 +245,13 @@ const generatedSql = computed(() => {
   }
 })
 
-const BLOCKED = ['drop ', 'truncate ', 'delete ', 'insert ', 'update ', 'alter ']
+const BLOCKED = ['drop ', 'truncate ', 'alter ']
+
+const handleLogout = async () => {
+  await logout()
+  rows.value  = []
+  error.value = ''
+}
 
 const executeQuery = async (sql: string) => {
   const q = sql.trim().toLowerCase()
@@ -278,28 +279,4 @@ const executeQuery = async (sql: string) => {
 const runBuilderQuery = () => executeQuery(generatedSql.value)
 const runEditorQuery  = () => executeQuery(query.value)
 
-const authenticate = async () => {
-  loginError.value = ''
-  try {
-    const res = await $fetch<{ user: string }>('/api/auth' as string, {
-      method: 'POST',
-      body: { username: loginUser.value, password: loginPass.value }
-    })
-    isStaff.value    = true
-    currentUser.value = res.user.toUpperCase()
-    showLogin.value  = false
-    loginUser.value  = ''
-    loginPass.value  = ''
-  }
-  catch { loginError.value = 'INVALID CREDENTIALS' }
-}
-
-const logout = async () => {
-  await $fetch('/api/logout' as string, { method: 'POST' })
-  isStaff.value    = false
-  currentUser.value = 'READONLY'
-  rows.value       = []
-  error.value      = ''
-  showLogin.value  = false
-}
 </script>
