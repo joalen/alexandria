@@ -47,6 +47,8 @@
                   <option value="fees">Members with Fees</option>
                   <option value="most_borrowed">Most Borrowed Books</option>
                   <option value="staff_activity">Staff Activity</option>
+                  <option value="book_availability">Book Availability</option>
+                  <option value="member_summary">Member Summary</option>
                 </select>
               </div>
 
@@ -189,15 +191,17 @@ const builder = reactive({
 
 const orderByOptions = computed(() => {
   const map: Record<string, { label: string; value: string }[]> = {
-    find_books:     [{ label: 'Title', value: 'b.name' }, { label: 'Date Added', value: 'b.date_added' }],
-    find_members:   [{ label: 'Member ID', value: 'm.member_id' }, { label: 'Date Joined', value: 'm.date_joined' }],
-    active_loans:   [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Member ID', value: 'l.member_id' }],
-    loan_history:   [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Date Returned', value: 'l.date_returned' }],
-    overdue:        [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Member ID', value: 'l.member_id' }],
-    reservations:   [{ label: 'Date Reserved', value: 'r.date_reserved' }, { label: 'Member ID', value: 'r.member_id' }],
-    fees:           [{ label: 'Late Fees', value: 'm.late_fees' }, { label: 'Member ID', value: 'm.member_id' }],
-    most_borrowed:  [{ label: 'Borrow Count', value: 'borrow_count' }],
-    staff_activity: [{ label: 'Date Hired', value: 's.date_hired' }, { label: 'Salary', value: 's.salary' }],
+    find_books:        [{ label: 'Title', value: 'b.name' }, { label: 'Date Added', value: 'b.date_added' }],
+    find_members:      [{ label: 'Member ID', value: 'm.member_id' }, { label: 'Date Joined', value: 'm.date_joined' }],
+    active_loans:      [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Member ID', value: 'l.member_id' }],
+    loan_history:      [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Date Returned', value: 'l.date_returned' }],
+    overdue:           [{ label: 'Date Issued', value: 'l.date_issued' }, { label: 'Member ID', value: 'l.member_id' }],
+    reservations:      [{ label: 'Date Reserved', value: 'r.date_reserved' }, { label: 'Member ID', value: 'r.member_id' }],
+    fees:              [{ label: 'Late Fees', value: 'm.late_fees' }, { label: 'Member ID', value: 'm.member_id' }],
+    most_borrowed:     [{ label: 'Borrow Count', value: 'borrow_count' }],
+    staff_activity:    [{ label: 'Date Hired', value: 's.date_hired' }, { label: 'Salary', value: 's.salary' }],
+    book_availability: [{ label: 'Title', value: 'b.name' }, { label: 'Available', value: 'available' }],
+    member_summary:    [{ label: 'Member ID', value: 'm.member_id' }, { label: 'Late Fees', value: 'm.late_fees' }],
   }
   return map[builder.operation] ?? []
 })
@@ -240,7 +244,14 @@ const generatedSql = computed(() => {
       return `SELECT b.name, b.author, COUNT(*) AS borrow_count\nFROM loan l\nJOIN book b ON l.book_serial_number = b.serial_number\nGROUP BY b.name, b.author\n${orderClause || 'ORDER BY borrow_count DESC'}\n${limitClause};`
     case 'staff_activity':
       return `SELECT s.staff_id, s.date_hired, s.salary, s.hours\nFROM staff s\n${orderClause}\n${limitClause};`
-    default:
+    
+    case 'book_availability':
+      return `SELECT b.name, b.author, b.serial_number,\n  COUNT(DISTINCT bc.book_id) AS total_copies,\n  COUNT(DISTINCT CASE WHEN l.date_returned IS NULL THEN l.loan_number END) AS on_loan,\n  COUNT(DISTINCT r.reservation_id) AS reserved\nFROM book b\nLEFT JOIN book_copy bc ON bc.book_id = b.serial_number\nLEFT JOIN loan l ON l.book_serial_number = b.serial_number AND l.date_returned IS NULL\nLEFT JOIN reservation r ON r.book_serial = b.serial_number\nGROUP BY b.name, b.author, b.serial_number\n${orderClause || 'ORDER BY b.name'}\n${limitClause};`
+
+    case 'member_summary':
+      return `SELECT m.member_id, m.date_joined, m.number_of_books_rented, m.late_fees,\n  COUNT(DISTINCT CASE WHEN l.date_returned IS NULL THEN l.loan_number END) AS active_loans,\n  COUNT(DISTINCT r.reservation_id) AS reservations\nFROM member m\nLEFT JOIN loan l ON l.member_id = m.member_id AND l.date_returned IS NULL\nLEFT JOIN reservation r ON r.member_id = m.member_id\nGROUP BY m.member_id, m.date_joined, m.number_of_books_rented, m.late_fees\n${orderClause}\n${limitClause};`
+    
+      default:
       return ''
   }
 })
