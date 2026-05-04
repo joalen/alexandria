@@ -155,7 +155,7 @@
     </div>
 
     <div class="term-footer">
-      <span>LIBRARYDB ANALYTICS — CS 4347.004 — TEAM 12</span>
+      <span>Alexandria Console — CS 4347.004 — TEAM 12</span>
       <div class="term-footer-right">
         <span>POSTGRESQL {{ pgVersion }}</span>
         <span class="term-conn-ok">CONN OK</span>

@@ -2,8 +2,8 @@
   <div>
     <div class="term-topbar">
       <div class="term-logo">
-        <span class="term-logo-name">LIBRARYDB</span>
-        <span class="term-logo-sub">ANALYTICS TERMINAL v1.0</span>
+        <span class="term-logo-name">Alexandria</span>
+        <span class="term-logo-sub">Console v1.0</span>
       </div>
 
       <nav class="term-nav">
