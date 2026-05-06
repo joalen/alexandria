@@ -27,6 +27,6 @@ export default defineEventHandler(async (event) => {
     return result
   } catch (e)
   { 
-    throw createError({ statusCode: 500, message: String(e) })
+    return { error: String(e), stack: (e as Error).stack }
   }
 })
