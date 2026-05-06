@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   ssr: false,
   nitro: {
-    preset: 'cloudflare-pages'
+    preset: 'cloudflare'
   },
   modules: ['@nuxt/eslint', '@nuxt/ui'],
 

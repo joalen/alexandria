@@ -1,0 +1,8 @@
+{
+  "name": "joalen-alexandria",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-05-06",
+  "assets": {
+    "directory": ".output/public"
+  }
+}
