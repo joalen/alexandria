@@ -9,19 +9,24 @@ export default defineEventHandler(async (event) => {
   const sessionData = token ? sessions.get(token) : null
 
   let cs: string
-  if (sessionData) {
-    const { username, password } = JSON.parse(sessionData)
-    const secrets = await getSecrets()
-    const base = new URL(secrets.NEON_CONNECTION_STRING!)
-    base.username = username
-    base.password = encodeURIComponent(decodeURIComponent(password))
-    cs = base.toString()
-  } else {
-    const secrets = await getSecrets()
-    cs = secrets.NEON_CONNECTION_STRING!
-  }
+  try { 
+      if (sessionData) {
+        const { username, password } = JSON.parse(sessionData)
+        const secrets = await getSecrets()
+        const base = new URL(secrets.NEON_CONNECTION_STRING!)
+        base.username = username
+        base.password = encodeURIComponent(decodeURIComponent(password))
+        cs = base.toString()
+      } else {
+        const secrets = await getSecrets()
+        cs = secrets.NEON_CONNECTION_STRING!
+      }
 
-  const sql = neon(cs)
-  const result = await sql.query(query)
-  return result
+    const sql = neon(cs)
+    const result = await sql.query(query)
+    return result
+  } catch (e)
+  { 
+    throw createError({ statusCode: 500, message: String(e) })
+  }
 })
