@@ -1,13 +1,15 @@
 import { neon } from '@neondatabase/serverless'
 import { sessions } from '../utils/sessions'
+import { getSecrets } from '../utils/secrets'
 
 export default defineEventHandler(async (event) => {
   const { username, password } = await readBody(event)
 
   try {
-    const base = new URL(process.env.NEON_CONNECTION_STRING!)
+    const secrets = await getSecrets()
+    const base = new URL(secrets.NEON_CONNECTION_STRING!)
     base.username = username
-    base.password = password
+    base.password = encodeURIComponent(decodeURIComponent(password))
     const sql = neon(base.toString())
     await sql.query('SELECT 1')
 
